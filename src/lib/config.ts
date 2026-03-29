@@ -13,6 +13,8 @@ const envSchema = z.object({
   LAVALINK_PORT: z.string().default('2333'),
   LAVALINK_PASSWORD: z.string().default('youshallnotpass'),
   OWNER_IDS: z.string().default(''),
+  SPOTIFY_CLIENT_ID: z.string().optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
