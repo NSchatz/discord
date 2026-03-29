@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GuildConfig {
+  id String @id // guild snowflake
+
+  // Moderation
+  logChannelId String?
+  muteRoleId   String?
+  automod      Boolean @default(false)
+
+  // Welcome / Goodbye
+  welcomeEnabled Boolean @default(false)
+  welcomeChannel String?
+  welcomeMessage String  @default("Welcome to {server}, {user}! You are member #{memberCount}.")
+  goodbyeEnabled Boolean @default(false)
+  goodbyeChannel String?
+  goodbyeMessage String  @default("Goodbye {user.tag}, we'll miss you!")
+  autoRoleId     String?
+
+  // Module toggles
+  enableEconomy  Boolean @default(true)
+  enableLeveling Boolean @default(true)
+  enableTickets  Boolean @default(false)
+  enableMusic    Boolean @default(true)
+  enableAi       Boolean @default(false)
+
+  // Leveling config
+  xpCooldown        Int      @default(60)
+  xpMin             Int      @default(15)
+  xpMax             Int      @default(25)
+  levelUpChannel    String?
+  ignoredXpChannels String[] @default([])
+
+  // AI config
+  aiChannelId String?
+  aiPersona   String?
+
+  // Warn escalation
+  warnThresholdTimeout Int @default(3)
+  warnThresholdBan     Int @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ModAction {
+  id          Int      @id @default(autoincrement())
+  guildId     String
+  userId      String
+  moderatorId String
+  action      String // "ban", "kick", "timeout", "warn", "unban", "untimeout"
+  reason      String?
+  duration    Int? // seconds, for temp actions
+  createdAt   DateTime @default(now())
+
+  @@index([guildId, userId])
+  @@index([guildId, createdAt(sort: Desc)])
+}
+
+model UserEconomy {
+  id       String    @id @default(cuid())
+  guildId  String
+  userId   String
+  wallet   Int       @default(0)
+  bank     Int       @default(0)
+  bankMax  Int       @default(10000)
+  lastDaily DateTime?
+  lastWork  DateTime?
+  lastRob   DateTime?
+
+  @@unique([guildId, userId])
+  @@index([guildId, wallet(sort: Desc)])
+}
+
+model ShopItem {
+  id          String   @id @default(cuid())
+  guildId     String
+  name        String
+  description String
+  price       Int
+  roleId      String?
+  maxQuantity Int      @default(-1)
+  createdAt   DateTime @default(now())
+
+  @@index([guildId])
+}
+
+model Inventory {
+  id       String @id @default(cuid())
+  guildId  String
+  userId   String
+  itemId   String
+  quantity Int    @default(1)
+
+  @@unique([guildId, userId, itemId])
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  guildId   String
+  fromId    String
+  toId      String
+  amount    Int
+  type      String // "transfer", "daily", "work", "shop", "gamble", "rob"
+  createdAt DateTime @default(now())
+
+  @@index([guildId, fromId])
+  @@index([guildId, toId])
+}
+
+model UserLevel {
+  id       String    @id @default(cuid())
+  guildId  String
+  userId   String
+  xp       Int       @default(0)
+  level    Int       @default(0)
+  messages Int       @default(0)
+  lastXpAt DateTime?
+
+  @@unique([guildId, userId])
+  @@index([guildId, level(sort: Desc)])
+}
+
+model LevelReward {
+  id      String @id @default(cuid())
+  guildId String
+  level   Int
+  roleId  String
+
+  @@unique([guildId, level])
+  @@index([guildId])
+}
+
+model TicketConfig {
+  id             String  @id @default(cuid())
+  guildId        String  @unique
+  categoryId     String?
+  supportRoleId  String
+  logChannelId   String?
+  panelChannelId String
+  panelMessageId String?
+  greeting       String  @default("A staff member will be with you shortly.")
+  maxOpen        Int     @default(3)
+}
+
+model Ticket {
+  id          Int       @id @default(autoincrement())
+  guildId     String
+  channelId   String    @unique
+  userId      String
+  claimedById String?
+  status      String    @default("open")
+  createdAt   DateTime  @default(now())
+  closedAt    DateTime?
+
+  @@index([guildId, userId])
+  @@index([guildId, status])
+}
+
+model Reminder {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  channelId String
+  guildId   String?
+  message   String
+  remindAt  DateTime
+  createdAt DateTime @default(now())
+
+  @@index([remindAt])
+}
+
+model Poll {
+  id        String    @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String?
+  question  String
+  options   String[]
+  votes     Json      @default("{}")
+  creatorId String
+  endsAt    DateTime?
+  createdAt DateTime  @default(now())
+}

@@ -1,0 +1,11 @@
+services:
+  bot:
+    build:
+      context: .
+      target: production
+    restart: always
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          memory: 512M
