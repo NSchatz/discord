@@ -46,7 +46,7 @@ client.cooldowns = new Collection();
 const commandsPath = join(__dirname, 'commands');
 for (const folder of readdirSync(commandsPath)) {
   const folderPath = join(commandsPath, folder);
-  for (const file of readdirSync(folderPath).filter(f => f.endsWith('.ts') || f.endsWith('.js'))) {
+  for (const file of readdirSync(folderPath).filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.endsWith('.d.ts') && !f.endsWith('.d.js'))) {
     const { default: command } = await import(pathToFileURL(join(folderPath, file)).href);
     if ('data' in command && 'execute' in command) {
       client.commands.set(command.data.name, command);
@@ -59,7 +59,7 @@ for (const folder of readdirSync(commandsPath)) {
 
 // Load events
 const eventsPath = join(__dirname, 'events');
-for (const file of readdirSync(eventsPath).filter(f => f.endsWith('.ts') || f.endsWith('.js'))) {
+for (const file of readdirSync(eventsPath).filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.endsWith('.d.ts') && !f.endsWith('.d.js'))) {
   const { default: event } = await import(pathToFileURL(join(eventsPath, file)).href);
   if (event.once) {
     client.once(event.name, (...args: unknown[]) => event.execute(...args));
